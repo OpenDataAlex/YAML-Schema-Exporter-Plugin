@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <!--
-    Document   : power_architect_doctrine_template.xsl
-    Created on : April 15, 2010, 9:14 AM
-    Author     : Alex Meadows
-    Description:
-        Below is the xslt template to transform the output of Power Architect
-        into a YAML Doctrine schema file.
+    This file is a xslt template for use in SQL Power* Architect.
+    The purpose of the template is to convert a database schema into
+        a Doctrine schema.yaml file.  Being a Symfony PHP Framework user,
+        this will aid in developing your applications.
+
+    (c) 2010 Alex Meadows <alexmeadows@bluefiredatasolutions.com>
+
+    For full copyright and license information, please view the License.txt file
+    located in the license folder distributed with this source code.
 -->
 
 <xsl:transform
@@ -21,7 +24,6 @@
   omit-xml-declaration="yes"
   doctype-public="-//W3C//DTD HTML 4.01 Transitional//EN"
 />
-    <xsl:strip-space elements="*"/>
 
     <xsl:variable name="vLower" select="'abcdefghijklmnopqrstuvwxyz'"/>
     <xsl:variable name="vUpper" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
