@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <!--
-    This file is a xslt template for use in SQL Power* Architect.
+    This file is a xslt template for use in SQL Power Architect.
     The purpose of the template is to convert a database schema into
-        a Doctrine schema.yaml file.  Being a Symfony PHP Framework user,
-        this will aid in developing your applications.
+        a Doctrine schema.yaml file.
 
     Copyright (c) 2010 Alex Meadows <alexmeadows@bluefiredatasolutions.com>
     
@@ -56,8 +55,13 @@
     <xsl:template name="table-definitions">
         <xsl:for-each select="/architect-project/target-database/table">
             <xsl:variable name="table-id" select="@id"/>
-
+            <xsl:variable name="table-name" select="@name"/>
             <xsl:sort select="@name"/>
+
+
+          <xsl:if test="not(contains($table-name, 'sf_guard'))
+                        or $table-name = 'sf_guard_user_profile'">
+
             <xsl:call-template name="Pascalize">
                 <xsl:with-param name="pText" select="@name"/>
             </xsl:call-template>
@@ -115,11 +119,13 @@
                 <xsl:variable name="delete-rule" select="@deleteRule"/>
                 <xsl:variable name="update-rule" select="@updateRule"/>
 
+
                 <xsl:for-each select="column-mapping">
                     <xsl:variable name="fk-col-id" select="@fk-column-ref"/>
                     <xsl:variable name="fk-col-name" select="//column[@id=$fk-col-id]/@name"/>
                     <xsl:variable name="pk-col-id" select="@pk-column-ref"/>
                     <xsl:variable name="pk-col-name" select="//column[@id=$pk-col-id]/@name"/>
+
 
                     <xsl:call-template name="relation-definition">
                         <xsl:with-param name="table" select="$targetTable"/>
@@ -131,15 +137,54 @@
 
                 </xsl:for-each>
             </xsl:for-each>
+            <!-- For each for the M:N relations.-->
             <xsl:for-each select="/architect-project/target-database/relationships/relationship[@pk-table-ref=$table-id]">
                 <xsl:variable name="fk-id" select="@fk-table-ref"/>
                 <xsl:variable name="targetTable" select="/architect-project/target-database/table[@id=$fk-id]/@name"/>
 
+                <xsl:if test="$targetTable != 'sf_guard_user'">
 
+                    <xsl:for-each select="column-mapping">
+                        <xsl:variable name="fk-col-id" select="@fk-column-ref"/>
+                        <xsl:variable name="fk-col-name" select="//column[@id=$fk-col-id]/@name"/>
+                        <xsl:variable name="pk-col-id" select="@pk-column-ref"/>
+                        <xsl:variable name="pk-col-name" select="//column[@id=$pk-col-id]/@name"/>
+
+                        <xsl:for-each select="/architect-project/target-database/relationships/relationship[@fk-table-ref=$fk-id]">
+                            <xsl:variable name="fk-id2" select="@pk-table-ref"/>
+                            <xsl:variable name="fk-col-id2" select="@pk-column-ref"/>
+                            <xsl:variable name="fk-col-name2" select="//column[@id=$fk-col-id2]/@name"/>
+                            
+                            <xsl:if test="$table-id != $fk-id2
+                                          and $fk-id2">
+                                <xsl:variable name="fkTable" select="/architect-project/target-database/table[@id=$fk-id2]/@name"/>
+
+                                <xsl:if test="$fkTable != 'sf_guard_user'">
+                                    &#160;&#160;&#160;&#160;
+                                    <xsl:call-template name="Pascalize">
+                                        <xsl:with-param name="pText" select="$fkTable"/>
+                                    </xsl:call-template>
+                                    <xsl:text>:  { class:  </xsl:text>
+                                    <xsl:call-template name="Pascalize">
+                                        <xsl:with-param name="pText" select="$fkTable"/>
+                                    </xsl:call-template>
+                                    <xsl:value-of select="$fk-col-name2"/>
+                                    <xsl:call-template name="many-many-relation-definition">
+                                        <xsl:with-param name="table" select="$targetTable"/>
+                                        <xsl:with-param name="columnName" select="$fk-col-name"/>
+                                        <xsl:with-param name="pkColumnName" select="$pk-col-name"/>
+                                    </xsl:call-template>
+                                </xsl:if>
+                            </xsl:if>
+                        </xsl:for-each>
+                    </xsl:for-each>
+                </xsl:if>
 
             </xsl:for-each>
             &#160;&#160;indexes:<br/>
             <br/>
+
+          </xsl:if>
         </xsl:for-each>
     </xsl:template>
 
@@ -256,7 +301,19 @@
         <xsl:text> }</xsl:text>
         <br/>
     </xsl:template>
-    
+
+    <xsl:template name="many-many-relation-definition">
+        <xsl:param name="table"/>
+        
+        
+        <xsl:text>, refClass:  </xsl:text>
+        <xsl:call-template name="Pascalize">
+            <xsl:with-param name="pText" select="$table"/>
+        </xsl:call-template>
+        <xsl:text>}</xsl:text>
+        <br/>
+    </xsl:template>
+
     <xsl:template name="RelationshipRuleCheck">
         <xsl:param name="ruleId"/>
         <xsl:choose>
