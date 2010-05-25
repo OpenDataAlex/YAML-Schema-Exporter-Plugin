@@ -182,6 +182,12 @@
 
             </xsl:for-each>
             &#160;&#160;indexes:<br/>
+            <xsl:for-each select="folder//index">
+               <xsl:call-template name="indexes">
+                    <xsl:with-param name="indexName" select="@name"/>
+                    <xsl:with-param name="primary" select="@primaryKeyIndex"/>
+               </xsl:call-template>                
+            </xsl:for-each>
             <br/>
 
           </xsl:if>
@@ -290,14 +296,25 @@
             </xsl:call-template>
         <xsl:text>, local:  </xsl:text><xsl:value-of select="$columnName"/>
         <xsl:text>, foreign:  </xsl:text><xsl:value-of select="$pkColumnName"/>
-        <xsl:text>, onUpdate:  </xsl:text>
-            <xsl:call-template name="RelationshipRuleCheck">
-                <xsl:with-param name="ruleId" select="$updateRule"/>
-            </xsl:call-template>
-        <xsl:text>, onDelete:  </xsl:text>
-            <xsl:call-template name="RelationshipRuleCheck">
-                <xsl:with-param name="ruleId" select="$deleteRule"/>
-            </xsl:call-template>
+        <xsl:text>, foreignAlias:  </xsl:text><xsl:value-of select="123"/>
+        <xsl:if test="$updateRule = '0'
+                      or $updateRule = '2'
+                      or $updateRule = '4'
+                      or $updateRule = '5'">
+            <xsl:text>, onUpdate:  </xsl:text>
+                <xsl:call-template name="RelationshipRuleCheck">
+                    <xsl:with-param name="ruleId" select="$updateRule"/>
+                </xsl:call-template>
+        </xsl:if>
+        <xsl:if test = "$deleteRule = '0'
+                      or $deleteRule = '2'
+                      or $deleteRule = '4'
+                      or $deleteRule = '5'">
+            <xsl:text>, onDelete:  </xsl:text>
+                <xsl:call-template name="RelationshipRuleCheck">
+                    <xsl:with-param name="ruleId" select="$deleteRule"/>
+                </xsl:call-template>
+        </xsl:if>
         <xsl:text> }</xsl:text>
         <br/>
     </xsl:template>
@@ -323,19 +340,46 @@
             <xsl:when test="$ruleId = 2">
                 <xsl:text>restrict</xsl:text>
             </xsl:when>
-            <xsl:when test="$ruleId = 3">
-                <xsl:text>noAction</xsl:text>
-            </xsl:when>
             <xsl:when test="$ruleId = 4">
                 <xsl:text>setNull</xsl:text>
             </xsl:when>
             <xsl:when test="$ruleId = 5">
                 <xsl:text>setDefault</xsl:text>
             </xsl:when>
-            <xsl:otherwise>
+            <!--<xsl:otherwise>
                 <xsl:text>not-supported</xsl:text><xsl:value-of select="$ruleId"/>
-            </xsl:otherwise>
+            </xsl:otherwise>-->
         </xsl:choose>
+    </xsl:template>
+
+    <xsl:template name="indexes">
+        <xsl:param name="indexName"/>
+        <xsl:param name="primary"/>
+
+        &#160;&#160;&#160;&#160;<xsl:value-of select="$indexName"/>:<br />
+        &#160;&#160;&#160;&#160;&#160;&#160;fields:<br/>
+
+        <xsl:for-each select="index-column">
+            <xsl:param name="sorting" select="@ascendingOrDescending"/>
+
+            &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+            <xsl:value-of select="@name"/>:<br/>
+            &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+            sorting:
+            <xsl:choose>
+                <xsl:when test="$sorting = 'ASCENDING'">&#160;&#160;ASC</xsl:when>
+                <xsl:when test="$sorting = 'DESCENDING'">&#160;&#160;DESC</xsl:when>
+            </xsl:choose>
+            <br/>
+        </xsl:for-each>
+
+        &#160;&#160;&#160;&#160;&#160;&#160;primary:
+            <xsl:value-of select="$primary"/><br/>
+        &#160;&#160;&#160;&#160;&#160;&#160;type:
+        <xsl:choose>
+            <xsl:when test="@unique = 'true'">&#160;&#160;unique</xsl:when>
+        </xsl:choose>
+        <br/>
     </xsl:template>
 
     <!--Special thanks to Dimitre Novatchev for writing the Pascalize template
