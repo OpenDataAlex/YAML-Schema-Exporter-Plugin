@@ -32,24 +32,19 @@
 
 <xsl:output
   encoding="iso-8859-15"
-  method="html"
-  indent="yes"
+  method="text"
+  indent="no"
   standalone="yes"
   omit-xml-declaration="yes"
+  media-type="text/yaml"
   doctype-public="-//W3C//DTD HTML 4.01 Transitional//EN"
 />
 
     <xsl:variable name="vLower" select="'abcdefghijklmnopqrstuvwxyz'"/>
     <xsl:variable name="vUpper" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
-
+    
     <xsl:template match="/">
-        <html>
-            <head>
-            </head>
-            <body>
-                <xsl:call-template name="table-definitions"/>
-            </body>
-        </html>
+       <xsl:call-template name="table-definitions"/>
     </xsl:template>
 
     <xsl:template name="table-definitions">
@@ -61,36 +56,37 @@
 
           <xsl:if test="not(contains($table-name, 'sf_guard'))
                         or $table-name = 'sf_guard_user_profile'">
-
             <xsl:call-template name="Pascalize">
                 <xsl:with-param name="pText" select="@name"/>
             </xsl:call-template>
-            :<br/>
-            &#160;&#160;actAs:<br/>
+            <xsl:text>:&#10;</xsl:text>
+            <xsl:text>  actAs:&#10;</xsl:text>
             <xsl:for-each select="folder//column">
-                <xsl:if test="@physicalName = 'created_at'
-                          or @physicalName = 'updated_at'
-                          or @physicalName = 'created_by'
-                          or @physicalName = 'updated_by'">
+                <xsl:variable name="physicalName" select="@physicalName"/>
+                <xsl:if test="$physicalName = 'created_at'
+                          or $physicalName = 'updated_at'
+                          or $physicalName = 'created_by'
+                          or $physicalName = 'updated_by'">
                 
 
 
                 </xsl:if>
             </xsl:for-each>
-            &#160;&#160;columns:<br/>
+            <xsl:text>  columns:&#10;</xsl:text>
             <xsl:for-each select="folder//column">
+                <xsl:variable name="physicalName" select="@physicalName"/>
                 <!-- Testing for any Doctrine behavior columns,
                      since they do not need to be repeated in
                      the columns list. -->
-                <xsl:if test="@physicalName != 'id'
-                          and @physicalName != 'created_at'
-                          and @physicalName != 'updated_at'
-                          and @physicalName != 'created_by'
-                          and @physicalName != 'updated_by'">
+                <xsl:if test="$physicalName != 'id'
+                          and $physicalName != 'created_at'
+                          and $physicalName != 'updated_at'
+                          and $physicalName != 'created_by'
+                          and $physicalName != 'updated_by'">
                     
-                    &#160;&#160;&#160;&#160;
-                    <xsl:value-of select="@physicalName"/>:  {  type:&#160;&#160;
-
+                    
+                    <xsl:text>    <xsl:value-of select="$physicalName"/></xsl:text>
+                    <xsl:text>:  {  type:  </xsl:text>
                     <xsl:call-template name="column-type-definition">
                         <xsl:with-param name="type-id" select="@type"/>
                     </xsl:call-template>
@@ -107,12 +103,12 @@
                     <xsl:if test="@defaultValue and string-length(@primaryKeySeq) = 0">
                         <xsl:text>, default:  </xsl:text><xsl:value-of select="@defaultValue"/>
                     </xsl:if>
-                    }<br/>
+                    <xsl:text> }&#10;</xsl:text>
 
                 </xsl:if>
             </xsl:for-each>
             
-            &#160;&#160;relations:<br/>
+            <xsl:text>  relations:&#10;</xsl:text>
             <xsl:for-each select="/architect-project/target-database/relationships/relationship[@fk-table-ref=$table-id]">
                 <xsl:variable name="pk-id" select="@pk-table-ref"/>
                 <xsl:variable name="targetTable" select="/architect-project/target-database/table[@id=$pk-id]/@name"/>
@@ -160,7 +156,7 @@
                                 <xsl:variable name="fkTable" select="/architect-project/target-database/table[@id=$fk-id2]/@name"/>
 
                                 <xsl:if test="$fkTable != 'sf_guard_user'">
-                                    &#160;&#160;&#160;&#160;
+                                    <xsl:text>    </xsl:text>
                                     <xsl:call-template name="Pascalize">
                                         <xsl:with-param name="pText" select="$fkTable"/>
                                     </xsl:call-template>
@@ -174,6 +170,7 @@
                                         <xsl:with-param name="columnName" select="$fk-col-name"/>
                                         <xsl:with-param name="pkColumnName" select="$pk-col-name"/>
                                     </xsl:call-template>
+                                    <xsl:text>&#10;</xsl:text>
                                 </xsl:if>
                             </xsl:if>
                         </xsl:for-each>
@@ -181,14 +178,15 @@
                 </xsl:if>
 
             </xsl:for-each>
-            &#160;&#160;indexes:<br/>
+            <!--&#160;&#160;indexes:<br/>
             <xsl:for-each select="folder//index">
-               <xsl:call-template name="indexes">
-                    <xsl:with-param name="indexName" select="@name"/>
-                    <xsl:with-param name="primary" select="@primaryKeyIndex"/>
-               </xsl:call-template>                
+               <xsl:if test="@primaryKeyIndex = 'false'">
+                    <xsl:call-template name="indexes">
+                        <xsl:with-param name="indexName" select="@name"/>
+                    </xsl:call-template>
+               </xsl:if>
             </xsl:for-each>
-            <br/>
+            <br/>-->
 
           </xsl:if>
         </xsl:for-each>
@@ -286,7 +284,7 @@
         <xsl:param name="updateRule"/>
         <xsl:param name="deleteRule"/>
 
-        &#160;&#160;&#160;&#160;
+        <xsl:text>    </xsl:text>
         <xsl:call-template name="Pascalize">
             <xsl:with-param name="pText" select="$columnName"/>
         </xsl:call-template>
@@ -315,20 +313,18 @@
                     <xsl:with-param name="ruleId" select="$deleteRule"/>
                 </xsl:call-template>
         </xsl:if>
-        <xsl:text> }</xsl:text>
+        <xsl:text> }&#10;</xsl:text>
         <br/>
     </xsl:template>
 
     <xsl:template name="many-many-relation-definition">
         <xsl:param name="table"/>
         
-        
         <xsl:text>, refClass:  </xsl:text>
         <xsl:call-template name="Pascalize">
             <xsl:with-param name="pText" select="$table"/>
         </xsl:call-template>
         <xsl:text>}</xsl:text>
-        <br/>
     </xsl:template>
 
     <xsl:template name="RelationshipRuleCheck">
@@ -356,6 +352,11 @@
         <xsl:param name="indexName"/>
         <xsl:param name="primary"/>
 
+        <xsl:if test="not(contains($indexName, 'created_at'))
+                      and not(contains($indexName, 'updated_at'))
+                      and not(contains($indexName, 'created_by'))
+                      and not(contains($indexName, 'updated_by'))">
+
         &#160;&#160;&#160;&#160;<xsl:value-of select="$indexName"/>:<br />
         &#160;&#160;&#160;&#160;&#160;&#160;fields:<br/>
 
@@ -372,14 +373,12 @@
             </xsl:choose>
             <br/>
         </xsl:for-each>
-
-        &#160;&#160;&#160;&#160;&#160;&#160;primary:
-            <xsl:value-of select="$primary"/><br/>
-        &#160;&#160;&#160;&#160;&#160;&#160;type:
+        
         <xsl:choose>
-            <xsl:when test="@unique = 'true'">&#160;&#160;unique</xsl:when>
+            <xsl:when test="@unique = 'true'"> &#160;&#160;&#160;&#160;&#160;&#160;type:&#160;&#160;unique</xsl:when>
         </xsl:choose>
         <br/>
+        </xsl:if>
     </xsl:template>
 
     <!--Special thanks to Dimitre Novatchev for writing the Pascalize template
