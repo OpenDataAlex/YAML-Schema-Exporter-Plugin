@@ -40,6 +40,9 @@
   doctype-public="-//W3C//DTD HTML 4.01 Transitional//EN"
 />
 
+    
+    <xsl:key name="pluginColumnTest" match="column" use="@id/column/@physicalName"/>
+
     <xsl:variable name="vLower" select="'abcdefghijklmnopqrstuvwxyz'"/>
     <xsl:variable name="vUpper" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
     
@@ -61,25 +64,21 @@
             </xsl:call-template>
             <xsl:text>:&#10;</xsl:text>
             <xsl:text>  actAs:&#10;</xsl:text>
-            <xsl:for-each select="folder//column">
-                <xsl:variable name="physicalName" select="@physicalName"/>
-                <xsl:if test="$physicalName = 'created_at'
-                          or $physicalName = 'updated_at'
-                          or $physicalName = 'created_by'
-                          or $physicalName = 'updated_by'">
-                
 
+            <xsl:if test="key('pluginColumnTest', 'created_by') or key('pluginColumnTest', 'updated_by')">
+                <xsl:text>    Blameable:&#10;</xsl:text>
+                <xsl:text>      listener:  BlameableSymfony&#10;</xsl:text>
+                <xsl:text>      columns:&#10;</xsl:text>
+            </xsl:if>
+            
 
-                </xsl:if>
-            </xsl:for-each>
             <xsl:text>  columns:&#10;</xsl:text>
             <xsl:for-each select="folder//column">
                 <xsl:variable name="physicalName" select="@physicalName"/>
                 <!-- Testing for any Doctrine behavior columns,
                      since they do not need to be repeated in
                      the columns list. -->
-                <xsl:if test="$physicalName != 'id'
-                          and $physicalName != 'created_at'
+                <xsl:if test="$physicalName != 'created_at'
                           and $physicalName != 'updated_at'
                           and $physicalName != 'created_by'
                           and $physicalName != 'updated_by'">
@@ -94,13 +93,14 @@
                         <xsl:with-param name="precision" select="@precision"/>
                         <xsl:with-param name="scale" select="@scale"/>
                     </xsl:call-template>
-                    <xsl:if test="string-length(@primaryKeySeq) &gt; 0">
+                    <xsl:if test="string-length(@primaryKeySeq) = 0">
                         <xsl:text>, primary:  true</xsl:text>
                     </xsl:if>
                     <xsl:if test="@nullable = '0'">
                         <xsl:text>, notnull:  true</xsl:text>
                     </xsl:if>
-                    <xsl:if test="@defaultValue and string-length(@primaryKeySeq) = 0">
+                    <xsl:if test="@defaultValue != ''
+                                  and string-length(@primaryKeySeq) = 0">
                         <xsl:text>, default:  </xsl:text><xsl:value-of select="@defaultValue"/>
                     </xsl:if>
                     <xsl:text> }&#10;</xsl:text>
@@ -114,6 +114,7 @@
                 <xsl:variable name="targetTable" select="/architect-project/target-database/table[@id=$pk-id]/@name"/>
                 <xsl:variable name="delete-rule" select="@deleteRule"/>
                 <xsl:variable name="update-rule" select="@updateRule"/>
+                <xsl:variable name="relationship-name" select="@name"/>
 
 
                 <xsl:for-each select="column-mapping">
@@ -129,6 +130,7 @@
                         <xsl:with-param name="pkColumnName" select="$pk-col-name"/>
                         <xsl:with-param name="updateRule" select="$update-rule"/>
                         <xsl:with-param name="deleteRule" select="$delete-rule"/>
+                        <xsl:with-param name="relationshipName" select="$relationship-name"/>
                     </xsl:call-template>
 
                 </xsl:for-each>
@@ -178,6 +180,7 @@
                 </xsl:if>
 
             </xsl:for-each>
+            
             <!--&#160;&#160;indexes:<br/>
             <xsl:for-each select="folder//index">
                <xsl:if test="@primaryKeyIndex = 'false'">
@@ -273,7 +276,7 @@
         </xsl:if>
 
         <xsl:if test="$scale &gt; 0">
-            , scale:&#160;&#160;<xsl:value-of select="$scale"/>
+            <xsl:text>, scale:  </xsl:text><xsl:value-of select="$scale"/>
         </xsl:if>
     </xsl:template>
 
@@ -283,6 +286,7 @@
         <xsl:param name="pkColumnName"/>
         <xsl:param name="updateRule"/>
         <xsl:param name="deleteRule"/>
+        <xsl:param name="relationshipName"/>
 
         <xsl:text>    </xsl:text>
         <xsl:call-template name="Pascalize">
@@ -294,7 +298,10 @@
             </xsl:call-template>
         <xsl:text>, local:  </xsl:text><xsl:value-of select="$columnName"/>
         <xsl:text>, foreign:  </xsl:text><xsl:value-of select="$pkColumnName"/>
-        <xsl:text>, foreignAlias:  </xsl:text><xsl:value-of select="123"/>
+        <xsl:text>, foreignAlias:  </xsl:text>
+        <xsl:call-template name="Pascalize">
+            <xsl:with-param name="pText" select="$relationshipName"/>
+        </xsl:call-template>
         <xsl:if test="$updateRule = '0'
                       or $updateRule = '2'
                       or $updateRule = '4'
@@ -389,7 +396,17 @@
         <xsl:param name="pText"/>
 
         <xsl:if test="$pText">
-            <xsl:value-of select="translate(substring($pText,1,1), $vLower, $vUpper)"/>
+
+            <xsl:choose>
+                <xsl:when test="$pText = 'sf_guard_user'">
+                    <xsl:text>s</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="translate(substring($pText,1,1), $vLower, $vUpper)"/>
+                </xsl:otherwise>
+            </xsl:choose>
+
+
 
             <xsl:value-of select="substring-before(substring($pText,2), '_')"/>
 
