@@ -26,6 +26,11 @@
     located in the license folder distributed with this source code.
 -->
 
+    <!--Special thanks to Dimitre Novatchev for writing the Pascalize template
+        in response to my question on StackOverflow
+        (http://stackoverflow.com/questions/2647327/how-to-format-a-string-to-camel-case-in-xslt/2647656#2647656)
+        as well as helping me better understand xsl:key. -->
+
 <xsl:transform
      version="1.0"
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -40,8 +45,8 @@
   doctype-public="-//W3C//DTD HTML 4.01 Transitional//EN"
 />
 
-    
-    <xsl:key name="pluginColumnTest" match="column" use="@id/column/@physicalName"/>
+    <xsl:key name="kTableByName" match="folder" use="@id"/>
+    <xsl:key name="pluginColumnTest" match="column" use="concat(generate-id(..), '+', @physicalName)"/>
 
     <xsl:variable name="vLower" select="'abcdefghijklmnopqrstuvwxyz'"/>
     <xsl:variable name="vUpper" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
@@ -54,6 +59,7 @@
         <xsl:for-each select="/architect-project/target-database/table">
             <xsl:variable name="table-id" select="@id"/>
             <xsl:variable name="table-name" select="@name"/>
+            <xsl:variable name="folder-id" select="folder/@id"/>
             <xsl:sort select="@name"/>
 
 
@@ -65,12 +71,84 @@
             <xsl:text>:&#10;</xsl:text>
             <xsl:text>  actAs:&#10;</xsl:text>
 
-            <xsl:if test="key('pluginColumnTest', 'created_by') or key('pluginColumnTest', 'updated_by')">
+            <!--Does the table have the standard columns for Doctrine Behavior Blameable? -->
+
+            <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'created_by'
+                                     )
+                              ))
+                           or
+                           boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'updated_by'
+                                     )
+                              ))">
                 <xsl:text>    Blameable:&#10;</xsl:text>
                 <xsl:text>      listener:  BlameableSymfony&#10;</xsl:text>
                 <xsl:text>      columns:&#10;</xsl:text>
             </xsl:if>
-            
+
+            <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'created_by'
+                                     )
+                              ))">
+
+                <xsl:text>        created:  {  name:  created_by, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
+            </xsl:if>
+
+            <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'updated_by'
+                                     )
+                              ))">
+
+                <xsl:text>        updated:  {  name:  updated_by, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
+            </xsl:if>
+
+                        <!--Does the table have the standard columns for Doctrine Behavior Timestampable? -->
+
+            <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'created_at'
+                                     )
+                              ))
+                           or
+                           boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'updated_at'
+                                     )
+                              ))">
+                <xsl:text>    Timestampable:&#10;</xsl:text>
+                <xsl:text>      columns:&#10;</xsl:text>
+            </xsl:if>
+
+            <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'created_at'
+                                     )
+                              ))">
+
+                <xsl:text>        created:  {  name:  created_at, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
+            </xsl:if>
+
+            <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'updated_at'
+                                     )
+                              ))">
+
+                <xsl:text>        updated:  {  name:  updated_at, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
+            </xsl:if>
 
             <xsl:text>  columns:&#10;</xsl:text>
             <xsl:for-each select="folder//column">
@@ -93,7 +171,7 @@
                         <xsl:with-param name="precision" select="@precision"/>
                         <xsl:with-param name="scale" select="@scale"/>
                     </xsl:call-template>
-                    <xsl:if test="string-length(@primaryKeySeq) = 0">
+                    <xsl:if test="string-length(@primaryKeySeq) != 0">
                         <xsl:text>, primary:  true</xsl:text>
                     </xsl:if>
                     <xsl:if test="@nullable = '0'">
@@ -272,7 +350,7 @@
         <xsl:param name="scale"/>
 
         <xsl:if test="$precision &gt; 0">
-            <xsl:text>&#40;</xsl:text><xsl:value-of select="$precision"/><xsl:text>&#41;</xsl:text>
+            <xsl:text>, length:  </xsl:text><xsl:value-of select="$precision"/>
         </xsl:if>
 
         <xsl:if test="$scale &gt; 0">
@@ -387,10 +465,6 @@
         <br/>
         </xsl:if>
     </xsl:template>
-
-    <!--Special thanks to Dimitre Novatchev for writing the Pascalize template
-        in response to my question on StackOverflow
-        (http://stackoverflow.com/questions/2647327/how-to-format-a-string-to-camel-case-in-xslt/2647656#2647656). -->
 
     <xsl:template name="Pascalize">
         <xsl:param name="pText"/>
