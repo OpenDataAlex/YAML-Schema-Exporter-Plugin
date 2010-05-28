@@ -72,7 +72,7 @@
             <xsl:text>:&#10;</xsl:text>
             <xsl:text>  actAs:&#10;</xsl:text>
 
-            <!--Does the table have the standard columns for Doctrine Behavior Blameable? -->
+            <!--Does the table have the standard columns for Doctrine Extension Blameable? -->
 
             <xsl:if test="boolean(key('pluginColumnTest',
                                concat(generate-id(key('kTableByName', $folder-id)),
@@ -149,6 +149,20 @@
                               ))">
 
                 <xsl:text>        updated:  {  name:  updated_at, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
+            </xsl:if>
+
+            <!-- Does the table have the standard column for Doctrine Behavior Versionable? -->
+
+            <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'version'
+                                     )
+                              ))">
+                <xsl:text>    Versionable:&#10;</xsl:text>
+                <xsl:text>      versionColumn:  version&#10;</xsl:text>
+                <xsl:text>      className:  %CLASS%Version&#10;</xsl:text>
+                <xsl:text>      auditLog:  true</xsl:text>
             </xsl:if>
 
             <xsl:text>  columns:&#10;</xsl:text>
@@ -263,7 +277,7 @@
 
             </xsl:for-each>
 
-            <!--&#160;&#160;indexes:<br/>
+            <xsl:text>  indexes:&#10;</xsl:text>
             <xsl:for-each select="folder//index">
                <xsl:if test="@primaryKeyIndex = 'false'">
                     <xsl:call-template name="indexes">
@@ -271,7 +285,7 @@
                     </xsl:call-template>
                </xsl:if>
             </xsl:for-each>
-            <br/>-->
+            <br/>
 
           </xsl:if>
         </xsl:for-each>
@@ -453,27 +467,30 @@
                       and not(contains($indexName, 'created_by'))
                       and not(contains($indexName, 'updated_by'))">
 
-        &#160;&#160;&#160;&#160;<xsl:value-of select="$indexName"/>:<br />
-        &#160;&#160;&#160;&#160;&#160;&#160;fields:<br/>
+        <xsl:text>    </xsl:text><xsl:value-of select="$indexName"/><xsl:text>:&#10;</xsl:text>
+        <xsl:text>      fields:&#10;</xsl:text>
 
         <xsl:for-each select="index-column">
             <xsl:param name="sorting" select="@ascendingOrDescending"/>
 
-            &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
-            <xsl:value-of select="@name"/>:<br/>
-            &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
-            sorting:
+            <xsl:text>        </xsl:text><xsl:value-of select="@name"/><xsl:text>:&#10;</xsl:text>
+            <xsl:text>          sorting:</xsl:text>
             <xsl:choose>
-                <xsl:when test="$sorting = 'ASCENDING'">&#160;&#160;ASC</xsl:when>
-                <xsl:when test="$sorting = 'DESCENDING'">&#160;&#160;DESC</xsl:when>
+                <xsl:when test="$sorting = 'ASCENDING'">
+                    <xsl:text>  ASC</xsl:text>
+                </xsl:when>
+                <xsl:when test="$sorting = 'DESCENDING'">
+                    <xsl:text>  DESC</xsl:text>
+                </xsl:when>
             </xsl:choose>
-            <br/>
+            <xsl:text>&#10;</xsl:text>
         </xsl:for-each>
         
         <xsl:choose>
-            <xsl:when test="@unique = 'true'"> &#160;&#160;&#160;&#160;&#160;&#160;type:&#160;&#160;unique</xsl:when>
+            <xsl:when test="@unique = 'true'">
+                <xsl:text>      type:  unique&#10;</xsl:text>
+            </xsl:when>
         </xsl:choose>
-        <br/>
         </xsl:if>
     </xsl:template>
 
