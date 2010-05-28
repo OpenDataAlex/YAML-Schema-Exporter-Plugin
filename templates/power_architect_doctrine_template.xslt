@@ -27,7 +27,7 @@
 -->
 
     <!--Special thanks to Dimitre Novatchev for writing the Pascalize template
-        in response to my question on StackOverflow
+        in response to my question on Stack Overflow
         (http://stackoverflow.com/questions/2647327/how-to-format-a-string-to-camel-case-in-xslt/2647656#2647656)
         as well as helping me better understand xsl:key. -->
 
@@ -65,6 +65,7 @@
 
           <xsl:if test="not(contains($table-name, 'sf_guard'))
                         or $table-name = 'sf_guard_user_profile'">
+            
             <xsl:call-template name="Pascalize">
                 <xsl:with-param name="pText" select="@name"/>
             </xsl:call-template>
@@ -111,7 +112,7 @@
                 <xsl:text>        updated:  {  name:  updated_by, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
             </xsl:if>
 
-                        <!--Does the table have the standard columns for Doctrine Behavior Timestampable? -->
+            <!--Does the table have the standard columns for Doctrine Behavior Timestampable? -->
 
             <xsl:if test="boolean(key('pluginColumnTest',
                                concat(generate-id(key('kTableByName', $folder-id)),
@@ -159,7 +160,8 @@
                 <xsl:if test="$physicalName != 'created_at'
                           and $physicalName != 'updated_at'
                           and $physicalName != 'created_by'
-                          and $physicalName != 'updated_by'">
+                          and $physicalName != 'updated_by'
+                          and $physicalName != 'id'">
                     
                     
                     <xsl:text>    <xsl:value-of select="$physicalName"/></xsl:text>
@@ -213,6 +215,7 @@
 
                 </xsl:for-each>
             </xsl:for-each>
+
             <!-- For each for the M:N relations.-->
             <xsl:for-each select="/architect-project/target-database/relationships/relationship[@pk-table-ref=$table-id]">
                 <xsl:variable name="fk-id" select="@fk-table-ref"/>
@@ -247,6 +250,7 @@
                                     <xsl:value-of select="$fk-col-name2"/>
                                     <xsl:call-template name="many-many-relation-definition">
                                         <xsl:with-param name="table" select="$targetTable"/>
+                                        <xsl:with-param name="fkTable" select="$fkTable"/>
                                         <xsl:with-param name="columnName" select="$fk-col-name"/>
                                         <xsl:with-param name="pkColumnName" select="$pk-col-name"/>
                                     </xsl:call-template>
@@ -258,7 +262,7 @@
                 </xsl:if>
 
             </xsl:for-each>
-            
+
             <!--&#160;&#160;indexes:<br/>
             <xsl:for-each select="folder//index">
                <xsl:if test="@primaryKeyIndex = 'false'">
@@ -350,7 +354,7 @@
         <xsl:param name="scale"/>
 
         <xsl:if test="$precision &gt; 0">
-            <xsl:text>, length:  </xsl:text><xsl:value-of select="$precision"/>
+            <xsl:text>&#40;</xsl:text><xsl:value-of select="$precision"/><xsl:text>&#41;</xsl:text>
         </xsl:if>
 
         <xsl:if test="$scale &gt; 0">
@@ -404,11 +408,18 @@
 
     <xsl:template name="many-many-relation-definition">
         <xsl:param name="table"/>
+        <xsl:param name="columnName"/>
+        <xsl:param name="pkColumnName"/>
+        <xsl:param name="fkTable"/>
         
         <xsl:text>, refClass:  </xsl:text>
         <xsl:call-template name="Pascalize">
             <xsl:with-param name="pText" select="$table"/>
         </xsl:call-template>
+        <xsl:text>, local:  </xsl:text>
+        <xsl:value-of select="$columnName"/>
+        <xsl:text>, foreign:  </xsl:text>
+        <xsl:value-of select="concat($fkTable, '_', $pkColumnName)"/>
         <xsl:text>}</xsl:text>
     </xsl:template>
 
@@ -427,9 +438,9 @@
             <xsl:when test="$ruleId = 5">
                 <xsl:text>setDefault</xsl:text>
             </xsl:when>
-            <!--<xsl:otherwise>
+            <xsl:otherwise>
                 <xsl:text>not-supported</xsl:text><xsl:value-of select="$ruleId"/>
-            </xsl:otherwise>-->
+            </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
 
@@ -472,7 +483,8 @@
         <xsl:if test="$pText">
 
             <xsl:choose>
-                <xsl:when test="$pText = 'sf_guard_user'">
+                <xsl:when test="$pText = 'sf_guard_user_profile'
+                                or $pText = 'sf_guard_user'">
                     <xsl:text>s</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
