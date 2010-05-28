@@ -184,6 +184,8 @@
                           and $physicalName != 'updated_at'
                           and $physicalName != 'created_by'
                           and $physicalName != 'updated_by'
+                          and $physicalName != 'deleted_at'
+                          and $physicalName != 'version'
                           and $physicalName != 'id'">
                     
                     
