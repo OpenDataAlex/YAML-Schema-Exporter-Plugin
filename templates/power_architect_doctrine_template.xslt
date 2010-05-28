@@ -112,6 +112,15 @@
                 <xsl:text>        updated:  {  name:  updated_by, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
             </xsl:if>
 
+            <!-- Does the table have the standard column for Doctrine Behavior SoftDelete? -->
+                <xsl:if test="boolean(key('pluginColumnTest',
+                               concat(generate-id(key('kTableByName', $folder-id)),
+                                      '+',
+                                      'deleted_at'
+                                     )
+                              ))">
+                <xsl:text>    SoftDelete:  ~&#10;</xsl:text>
+            </xsl:if>
             <!--Does the table have the standard columns for Doctrine Behavior Timestampable? -->
 
             <xsl:if test="boolean(key('pluginColumnTest',
@@ -138,7 +147,7 @@
                                      )
                               ))">
 
-                <xsl:text>        created:  {  name:  created_at, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
+                <xsl:text>        created:  {  name:  created_at, type:  timestamp, notnull:  false }&#10;</xsl:text>
             </xsl:if>
 
             <xsl:if test="boolean(key('pluginColumnTest',
@@ -148,7 +157,7 @@
                                      )
                               ))">
 
-                <xsl:text>        updated:  {  name:  updated_at, type:  integer, length:  4, notnull:  false }&#10;</xsl:text>
+                <xsl:text>        updated:  {  name:  updated_at, type:  timestamp, notnull:  false }&#10;</xsl:text>
             </xsl:if>
 
             <!-- Does the table have the standard column for Doctrine Behavior Versionable? -->
